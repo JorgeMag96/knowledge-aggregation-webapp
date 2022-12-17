@@ -1,14 +1,8 @@
 # Knowledge Aggregation React App
 
----
-
 This tool will be used to organize insights. It will allow large numbers of sticky notes (aka highlights) to be freely combined and sorted into clusters (aka groups) based on their natural relationships.
 
-
-
 ## Available Scripts
-
----
 
 ### `npm start`
 
