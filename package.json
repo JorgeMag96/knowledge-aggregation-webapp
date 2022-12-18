@@ -3,17 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@react-three/drei": "9.22.3",
-    "@react-three/fiber": "8.3.1",
+    "@react-three/drei": "9.32.0",
+    "@react-three/fiber": "8.8.2",
+    "@react-three/postprocessing": "2.6.2",
+    "postprocessing": "6.28.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "three": "0.144.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "s3-deploy": "npm run build && aws s3 sync --delete build/ s3://knowledge-aggregation-webapp"
   },
   "eslintConfig": {
     "extends": [
