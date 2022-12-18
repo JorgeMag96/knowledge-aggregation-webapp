@@ -1,7 +1,7 @@
 import Highlight from "./components/Highlight";
 import {Canvas} from "@react-three/fiber";
-import React, {useEffect, useLayoutEffect, useState} from "react";
-import {EffectComposer, Outline, Selection} from "@react-three/postprocessing";
+import React, {useEffect, useState} from "react";
+import {EffectComposer, Grid, Outline, Selection} from "@react-three/postprocessing";
 import Bucket from "./components/Bucket";
 import {MapControls} from "@react-three/drei";
 
@@ -10,49 +10,22 @@ function App() {
     const [highlights, setHighlights] = useState([]);
     const [buckets, setBuckets] = useState([]);
     const [controlsEnabled, setControlsEnabled] = useState(true);
+    const cameraPosition = JSON.parse(localStorage.getItem("cameraPosition")) || {x: 0, y: 0};
 
     function removeHighlight(key) {
-        setHighlights(highlights.filter(highlight => highlight.key !== key))
+        console.log("removing highlight: ", key)
+        localStorage.removeItem(key);
+        let localStorageHighlight = localStorage.getItem("highlights").split("|").filter(highlight => highlight !== key);
+        localStorage.setItem("highlights", localStorageHighlight.join("|"));
     }
 
     function removeBucket(key) {
+        console.log("removing bucket: ", key)
+        localStorage.removeItem(key);
+        let localStorageBuckets = localStorage.getItem("buckets").split("|").filter(bucket => bucket !== key);
+        localStorage.setItem("buckets", localStorageBuckets.join("|"));
         setBuckets(buckets.filter(bucket => bucket.key !== key))
     }
-
-    function initBuckets() {
-        const localStorageBuckets = localStorage.getItem("buckets");
-        let parsedBuckets = [];
-        if (localStorageBuckets) {
-            console.log("found buckets in localstorage: ", localStorageBuckets);
-            localStorageBuckets.split("|").forEach((bucket) => {
-                let bucketData = JSON.parse(localStorage.getItem(bucket));
-                console.log("found bucket data in localstorage: ", bucketData);
-                parsedBuckets.push(<Bucket key={bucket} props={{userData: bucket, x: bucketData.x, y: bucketData.y, setCanvasControlsEnabled: setControlsEnabled }}/>)
-            })
-            setBuckets(parsedBuckets);
-        }
-    }
-
-    function initHighlights() {
-        const localStorageHighlights = localStorage.getItem("highlights");
-        let parsedHighlights = [];
-        if (localStorageHighlights) {
-            console.log("found highlights in localstorage: ", localStorageHighlights);
-            localStorageHighlights.split("|").forEach((highlight) => {
-                let highlightData = JSON.parse(localStorage.getItem(highlight));
-                console.log("found highlight data in localstorage: ", highlightData);
-                parsedHighlights.push(<Highlight key={highlight} props={{userData: highlight,
-                    x: highlightData.x, y: highlightData.y, z: highlightData.z,
-                    text: highlightData.text, color: highlightData.color, setCanvasControlsEnabled: setControlsEnabled}}/>)
-            })
-            setHighlights(parsedHighlights);
-        }
-    }
-
-    useEffect(() => {
-        initBuckets();
-        initHighlights();
-    }, [])
 
     const generateKey = (pre) => {
         return `${ pre }_${ new Date().getTime() }`;
@@ -63,34 +36,83 @@ function App() {
 
         let localStorageHighlights = localStorage.getItem("highlights");
 
-        if(localStorageHighlights != null) {
+        if(localStorageHighlights != null && localStorageHighlights !== "") {
             localStorage.setItem("highlights", localStorageHighlights + "|" + key);
         } else {
             localStorage.setItem("highlights", key);
         }
-        localStorage.setItem(key, JSON.stringify({x, y, z}));
-        return <Highlight key={key} props={{userData: key, x: x, y: y, z: z, text: "Your text here", setCanvasControlsEnabled: setControlsEnabled}}/>
+
+        let text = "Your text here";
+        localStorage.setItem(key, JSON.stringify({x, y, z, text}));
+        return <Highlight key={key} props={{highlightKey: key, x: x, y: y, z: z, text: text,
+            setCanvasControlsEnabled: setControlsEnabled, removeHighlightFunc: () => removeHighlight(key)}}/>
     }
 
     function createBucket(x, y) {
         const key = generateKey("bucket");
-        let localStorageHighlights = localStorage.getItem("buckets");
+        let localStorageBuckets = localStorage.getItem("buckets");
 
-        if(localStorageHighlights != null) {
-            localStorage.setItem("buckets", localStorageHighlights + "|" + key);
+        if(localStorageBuckets != null && localStorageBuckets !== "") {
+            localStorage.setItem("buckets", localStorageBuckets + "|" + key);
         } else {
             localStorage.setItem("buckets", key);
         }
-        localStorage.setItem(key, JSON.stringify({x, y}));
-        return <Bucket key={key} props={{userData: key, x: 0, y: 0, setCanvasControlsEnabled: setControlsEnabled}}/>
+
+        let text = "Your text here";
+        localStorage.setItem(key, JSON.stringify({x, y, text}));
+        return <Bucket key={key} props={{bucketKey: key, x: 0, y: 0, text: text,
+            setCanvasControlsEnabled: setControlsEnabled, removeBucketFunc: () => removeBucket(key)}}/>
     }
+
+    function initBuckets() {
+        let localStorageBuckets = localStorage.getItem("buckets");
+        let parsedBuckets = [];
+        if (localStorageBuckets) {
+            console.log("found buckets in localstorage: ", localStorageBuckets);
+            localStorageBuckets.split("|").forEach((bucket) => {
+                let bucketData = JSON.parse(localStorage.getItem(bucket));
+                //console.log("found bucket data in localstorage: ", bucketData);
+                parsedBuckets.push(<Bucket key={bucket} props={{bucketKey: bucket,
+                    x: bucketData.x, y: bucketData.y,
+                    text: bucketData.text,
+                    setCanvasControlsEnabled: setControlsEnabled, removeBucketFunc: () => removeBucket(bucket)}}/>)
+            })
+            setBuckets(parsedBuckets);
+        } else {
+            setBuckets([createBucket(-300, 150)])
+        }
+    }
+
+    function initHighlights() {
+        const localStorageHighlights = localStorage.getItem("highlights");
+        let parsedHighlights = [];
+        if (localStorageHighlights) {
+            console.log("found highlights in localstorage: ", localStorageHighlights);
+            localStorageHighlights.split("|").forEach((highlight) => {
+                let highlightData = JSON.parse(localStorage.getItem(highlight));
+                //console.log("found highlight data in localstorage: ", highlightData);
+                parsedHighlights.push(<Highlight key={highlight} props={{highlightKey: highlight,
+                    x: highlightData.x, y: highlightData.y, z: highlightData.z,
+                    text: highlightData.text, color: highlightData.color,
+                    setCanvasControlsEnabled: setControlsEnabled, removeHighlightFunc: () => removeHighlight(highlight)}}/>)
+            })
+            setHighlights(parsedHighlights);
+        } else {
+            setHighlights([createHighlight(0, 0, 1)])
+        }
+    }
+
+    useEffect(() => {
+        initBuckets();
+        initHighlights();
+    }, [])
 
     return (
         <>
             <Canvas
                 orthographic
                 camera={{ position: [0, 0, 100], zoom: 1, up: [0, 0, 1], far: 1000 }}
-                style={{ width: '100%', height: '98vh', backgroundColor: 'white', zIndex: 0}}
+                style={{ width: '100%', height: '100vh', backgroundColor: 'white', zIndex: 0}}
                 dpr={[1, 2]}
                 frameloop={'demand'}
             >
@@ -102,14 +124,26 @@ function App() {
                     {buckets}
                     {highlights}
                 </Selection>
-                <MapControls enabled={controlsEnabled} enableRotate={false}/>
+                <MapControls enabled={controlsEnabled} enableRotate={false} target={[0, 0, 0]}/>
             </Canvas>
-            <button style={{ height: '2vh', zIndex: 0}} onClick={(e) => {
-                setHighlights([...highlights, createHighlight(0, 0, 1)])
-            }}>Create Highlight</button>
-            <button style={{ height: '2vh', zIndex: 0}} onClick={(e) => {
-                setBuckets([...buckets, createBucket(0, 0)])
-            }}>Create Bucket</button>
+            <div style={{position: "absolute", top: "0", left: "0", zIndex: 1, marginTop: '10px', marginLeft: '10px'}}>
+                <a href={"https://www.google.com/search?q=enable+hardware+acceleration+on+browser"}
+                target={'_blank'} style={{textDecoration: 'none'}}>
+                    ❗Make sure to enable hardware acceleration
+                </a>
+                <br/><br/>
+                <button style={{ height: '2vh', zIndex: 0}} onClick={(e) => {
+                    setHighlights([...highlights, createHighlight(0, 0, 10)])
+                }}><b>Create Sticky Note</b></button>
+                {" | "}
+                <button style={{ height: '2vh', zIndex: 0}} onClick={(e) => {
+                    setBuckets([...buckets, createBucket(0, 0)])
+                }}><b>Create Bucket</b></button>
+                {" | "}
+                <label style={{ height: '2vh', zIndex: 0}}><b>Double click</b> any element to delete</label>
+                {" | "}
+                <label style={{ height: '2vh', zIndex: 0}}><b>Right click</b> any note to change its color</label>
+            </div>
         </>
 
     );

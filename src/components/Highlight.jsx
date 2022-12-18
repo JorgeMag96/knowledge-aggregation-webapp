@@ -18,20 +18,21 @@ const Highlight = ({props}) => {
     const [textEdit, setTextEdit] = useState(false);
     const colors = ['#96ccf8', '#d7a9f4', '#e38987', '#f4de8d', '#a3f0ae'];
     const [selectedColorIndex, setSelectedColorIndex] = useState( () => {
-        if(props.color) {
+        if(props.color != null) {
             return props.color
         }
         const initialColorIndex = randInt(0, colors.length - 1);
-        localStorage.setItem(props.userData, JSON.stringify({x: position[0], y: position[1], z: position[2], text: text, color: initialColorIndex}))
+        localStorage.setItem(props.highlightKey, JSON.stringify({x: position[0], y: position[1], z: position[2], text: text, color: initialColorIndex}))
         return initialColorIndex
     });
+    const [deleted, setDeleted] = useState(false);
 
     const changeColor = (e) => {
         let selectedColorIndexTemp = (selectedColorIndex + 1) % colors.length;
         setSelectedColorIndex(selectedColorIndexTemp);
-        let localHighlight = JSON.parse(localStorage.getItem(props.userData));
+        let localHighlight = JSON.parse(localStorage.getItem(props.highlightKey));
         localHighlight.color = selectedColorIndexTemp;
-        localStorage.setItem(props.userData, JSON.stringify(localHighlight));
+        localStorage.setItem(props.highlightKey, JSON.stringify(localHighlight));
     }
 
     useEffect(() => {
@@ -62,65 +63,78 @@ const Highlight = ({props}) => {
                 anchorX="center"
                 anchorY="bottom"
                 textAlign="justify"
-                maxWidth= "1"
+                maxWidth= "80"
                 lineHeight="1"
-                position={[position[0], position[1] + 15, position[2]]}
+                visible={!deleted}
+                position={[position[0], position[1] + 15, position[2] + 5]}
                 text={text}
             />
             <Select enabled={holding}>
                 <mesh
                     {...props}
                     ref={ref}
+                    visible={!deleted}
 
-                    onContextMenu={changeColor}
+                    onContextMenu={(e) => {
+                        if(deleted) return
+                        changeColor()
+                    }}
 
                     position={position}
 
                     onClick={(e) => {
-                        console.log("clicked: ", props)
-                        setText(text + "a")
+                        if(deleted) return
+                        console.log(`clicked: ${props.highlightKey}`)
                     }}
 
                     onDoubleClick={(e) => {
-                        console.log("double clicked: ", props.userData)
-                        setTextEdit(true)
+                        if(deleted) return
+                        console.log(`double clicked: ${props.highlightKey}`)
+                        setDeleted(true)
+                        props.removeHighlightFunc()
                     }}
 
                     onPointerOver={(e) => {
+                        if(deleted) return
                         hover(true)
-                        console.log("hovered: ", props.userData)
+                        console.log(`hovered: ${props.highlightKey}`)
                     }}
 
                     onPointerOut={(e) => {
+                        if(deleted) return
                         hover(false)
                         hold(false)
-                        console.log("un-hovered: ", props.userData)
+                        console.log(`un-hovered: ${props.highlightKey}`)
                     }}
 
                     onPointerDown={(e) => {
+                        if(deleted) return
                         if(hovered) {
                             hold(true)
                             setHoldingPosition([e.point.x - position[0], e.point.y - position[1]])
                             props.setCanvasControlsEnabled(false)
-                            console.log(`holding ${props.userData}`)
+                            console.log(`holding ${props.highlightKey}`)
                         }
                     }}
 
                     onPointerUp={(e) => {
+                        if(deleted) return
                         if(holding) {
                             hold(false)
                             props.setCanvasControlsEnabled(true)
-                            let localHighlight = JSON.parse(localStorage.getItem(props.userData))
+                            let localHighlight = JSON.parse(localStorage.getItem(props.highlightKey))
                             localHighlight.x = position[0]
                             localHighlight.y = position[1]
-                            localStorage.setItem(props.userData, JSON.stringify(localHighlight))
-                            console.log("released: ", props.userData)
+                            localStorage.setItem(props.highlightKey, JSON.stringify(localHighlight))
+                            localStorage.setItem("cameraPosition", JSON.stringify({x: localHighlight.x, y: localHighlight.y}))
+                            console.log(`released: ${props.highlightKey}`)
                         }
                     }}
 
                     onPointerMove={(e) => {
+                        if(deleted) return
                         if(holding) {
-                            //console.log(`moving ${props.userData} from mouse position ${holdingPosition}`)
+                            //console.log(`moving ${props.highlightKey} from mouse position ${holdingPosition}`)
                             setPosition([e.point.x - holdingPosition[0], e.point.y - holdingPosition[1], position[2]])
                         }
                     }}

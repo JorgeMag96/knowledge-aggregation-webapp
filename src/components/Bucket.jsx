@@ -12,6 +12,8 @@ const Bucket = ({props}) => {
     const [position, setPosition] = useState([props.x, props.y, 1]);
     const [hovered, hover] = useState(false);
     const [holding, hold] = useState(false);
+    const [text, setText] = useState(props.text);
+    const [textEdit, setTextEdit] = useState(false);
     const [holdingPosition, setHoldingPosition] = useState([0, 0]);
 
     return (
@@ -21,25 +23,27 @@ const Bucket = ({props}) => {
                 color="black"
                 anchorX="center"
                 anchorY="bottom"
-                position={[position[0], position[1] + 225, position[2]]}
-            >
-                Your Text Here
-            </Text>
+                position={[position[0], position[1] + 225, position[2] + 5]}
+                text={text}
+            />
             <Select enabled={holding}>
                 <mesh
                     {...props}
                     ref={ref}
                     position={position}
 
+                    onDoubleClick={(e) => {
+                      props.removeBucketFunc()
+                    }}
                     onPointerOver={(e) => {
                         hover(true)
-                        console.log(`hovered: ${props.userData}`)
+                        console.log(`hovered: ${props.bucketKey}`)
                     }}
 
                     onPointerOut={(e) => {
                         hover(false)
                         hold(false)
-                        console.log(`un-hovered: ${props.userData}`)
+                        console.log(`un-hovered: ${props.bucketKey}`)
                     }}
 
                     onPointerDown={(e) => {
@@ -47,7 +51,7 @@ const Bucket = ({props}) => {
                             hold(true)
                             setHoldingPosition([e.point.x - position[0], e.point.y - position[1]])
                             props.setCanvasControlsEnabled(false)
-                            console.log(`holding ${props.userData}`)
+                            console.log(`holding ${props.bucketKey}`)
                         }
                     }}
 
@@ -55,14 +59,15 @@ const Bucket = ({props}) => {
                         if(holding) {
                             hold(false)
                             props.setCanvasControlsEnabled(true)
-                            localStorage.setItem(props.userData, JSON.stringify({x: position[0], y: position[1]}))
-                            console.log(`released: ${props.userData}`)
+                            localStorage.setItem(props.bucketKey, JSON.stringify({x: position[0], y: position[1], text: text}))
+                            localStorage.setItem("cameraPosition", JSON.stringify({x: position[0], y: position[1]}))
+                            console.log(`released: ${props.bucketKey}`)
                         }
                     }}
 
                     onPointerMove={(e) => {
                         if(holding) {
-                            //console.log(`moving ${props.userData} from mouse position ${holdingPosition}`)
+                            //console.log(`moving ${props.bucketKey} from mouse position ${holdingPosition}`)
                             setPosition([e.point.x - holdingPosition[0], e.point.y - holdingPosition[1], position[2]])
                         }
                     }}
