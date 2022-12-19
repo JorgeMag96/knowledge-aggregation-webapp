@@ -169,7 +169,6 @@ function App() {
   }
 
   useEffect(() => {
-      console.log("test here useeffect")
     initBuckets();
     initHighlights();
   }, []);
