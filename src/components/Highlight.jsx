@@ -9,12 +9,11 @@ extend({ Mesh, BoxGeometry, MeshStandardMaterial });
 
 const Highlight = ({ props }) => {
   const ref = useRef();
-  const [hovered, hover] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [holding, hold] = useState(false);
   const [position, setPosition] = useState([props.x, props.y, props.z]);
   const [holdingPosition, setHoldingPosition] = useState([0, 0]);
   const [text, setText] = useState(props.text);
-  const [textEdit, setTextEdit] = useState(false);
   const colors = ["#96ccf8", "#d7a9f4", "#e38987", "#f4de8d", "#a3f0ae"];
   const [selectedColorIndex, setSelectedColorIndex] = useState(() => {
     if (props.color != null) {
@@ -43,21 +42,40 @@ const Highlight = ({ props }) => {
     localStorage.setItem(props.highlightKey, JSON.stringify(localHighlight));
   };
 
-  useEffect(() => {
-    if (hovered) {
-      document.body.style.cursor = "move";
-    } else {
-      document.body.style.cursor = "auto"
+  const keyDownHandler = (e) => {
+    if (props.activeElementForTextEdit === props.highlightKey) {
+      let newText;
+      if (e.key === "Backspace") {
+        newText = text.substring(0, text.length - 1);
+      } else if (/[a-zA-Z0-9-_ ]/.test(String.fromCharCode(e.keyCode))) {
+        newText = text + e.key;
+      }
+      if(newText !== undefined) {
+        setText(newText);
+        localStorage.setItem(
+            props.highlightKey,
+            JSON.stringify({ x: position[0], y: position[1],  text: newText})
+        );
+      }
     }
+  };
+
+  useEffect(() => {
+
+  }, []);
+
+  useEffect(() => {
+    document.body.style.cursor = hovered ? "move" : "auto";
   }, [hovered]);
 
   useEffect(() => {
-    if (!deleted) {
-      document.body.style.cursor = "move";
-    } else {
-      document.body.style.cursor = "auto"
-    }
+    document.body.style.cursor = deleted ? "auto" : "move";
   }, [deleted]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", keyDownHandler);
+    return () => document.removeEventListener("keydown", keyDownHandler);
+  }, [text]);
 
   return (
     <>
@@ -85,6 +103,7 @@ const Highlight = ({ props }) => {
           position={position}
           onClick={(e) => {
             if (deleted) return;
+            props.setThisTextEditActive();
           }}
           onDoubleClick={(e) => {
             if (deleted) return;
@@ -93,11 +112,11 @@ const Highlight = ({ props }) => {
           }}
           onPointerOver={(e) => {
             if (deleted) return;
-            hover(true);
+            setHovered(true);
           }}
           onPointerOut={(e) => {
             if (deleted) return;
-            hover(false);
+            setHovered(false);
             hold(false);
           }}
           onPointerDown={(e) => {
@@ -142,7 +161,7 @@ const Highlight = ({ props }) => {
             }
           }}
         >
-          <planeBufferGeometry attach="geometry" args={[100, 100]} />
+          <planeGeometry attach="geometry" args={[100, 100]} />
           <meshStandardMaterial color={colors[selectedColorIndex]} />
         </mesh>
       </Select>

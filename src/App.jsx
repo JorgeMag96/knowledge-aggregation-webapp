@@ -1,4 +1,5 @@
 import Highlight from "./components/Highlight";
+import Bucket from "./components/Bucket";
 import { Canvas } from "@react-three/fiber";
 import React, { useEffect, useState } from "react";
 import {
@@ -6,14 +7,13 @@ import {
   Outline,
   Selection,
 } from "@react-three/postprocessing";
-import Bucket from "./components/Bucket";
 import { MapControls } from "@react-three/drei";
 
 function App() {
   const [highlights, setHighlights] = useState([]);
   const [buckets, setBuckets] = useState([]);
   const [controlsEnabled, setControlsEnabled] = useState(true);
-  const [activeElementForText, setActiveElementForText] = useState(null);
+  const [activeElementForText, setActiveElementForText] = useState("");
   const cameraPosition = JSON.parse(localStorage.getItem("cameraPosition")) || {
     x: 0,
     y: 0,
@@ -36,6 +36,14 @@ function App() {
       .filter((bucket) => bucket !== key);
     localStorage.setItem("buckets", localStorageBuckets.join("|"));
     setBuckets(buckets.filter((bucket) => bucket.key !== key));
+  }
+
+  function setTextEditActive(key) {
+    setActiveElementForText(key);
+  }
+
+  function getActiveElementForText() {
+      return activeElementForText;
   }
 
   const generateKey = (pre) => {
@@ -66,6 +74,8 @@ function App() {
           text: text,
           setCanvasControlsEnabled: setControlsEnabled,
           removeHighlightFunc: () => removeHighlight(key),
+          activeElementForTextEdit: getActiveElementForText,
+          setThisTextEditActive: () => setTextEditActive(key)
         }}
       />
     );
@@ -87,12 +97,14 @@ function App() {
       <Bucket
         key={key}
         props={{
-          bucketKey: key,
-          x: 0,
-          y: 0,
-          text: text,
-          setCanvasControlsEnabled: setControlsEnabled,
-          removeBucketFunc: () => removeBucket(key),
+            bucketKey: key,
+            x: 0,
+            y: 0,
+            text: text,
+            setCanvasControlsEnabled: setControlsEnabled,
+            removeBucketFunc: () => removeBucket(key),
+            activeElementForTextEdit: getActiveElementForText,
+            setThisTextEditActive: () => setTextEditActive(key)
         }}
       />
     );
@@ -108,12 +120,14 @@ function App() {
           <Bucket
             key={bucket}
             props={{
-              bucketKey: bucket,
-              x: bucketData.x,
-              y: bucketData.y,
-              text: bucketData.text,
-              setCanvasControlsEnabled: setControlsEnabled,
-              removeBucketFunc: () => removeBucket(bucket),
+                bucketKey: bucket,
+                x: bucketData.x,
+                y: bucketData.y,
+                text: bucketData.text,
+                setCanvasControlsEnabled: setControlsEnabled,
+                removeBucketFunc: () => removeBucket(bucket),
+                activeElementForTextEdit: getActiveElementForText,
+                setThisTextEditActive: () => setTextEditActive(bucket)
             }}
           />
         );
@@ -142,6 +156,8 @@ function App() {
               color: highlightData.color,
               setCanvasControlsEnabled: setControlsEnabled,
               removeHighlightFunc: () => removeHighlight(highlight),
+              activeElementForTextEdit: getActiveElementForText,
+              setThisTextEditActive: () => setTextEditActive(highlight)
             }}
           />
         );
@@ -153,6 +169,7 @@ function App() {
   }
 
   useEffect(() => {
+      console.log("test here useeffect")
     initBuckets();
     initHighlights();
   }, []);
