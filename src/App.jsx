@@ -21,21 +21,24 @@ function App() {
 
   function removeHighlight(key) {
     localStorage.removeItem(key);
+
     let localStorageHighlight = localStorage
       .getItem("highlights")
       .split("|")
       .filter((highlight) => highlight !== key);
+
     localStorage.setItem("highlights", localStorageHighlight.join("|"));
   }
 
   function removeBucket(key) {
     localStorage.removeItem(key);
+
     let localStorageBuckets = localStorage
       .getItem("buckets")
       .split("|")
       .filter((bucket) => bucket !== key);
+
     localStorage.setItem("buckets", localStorageBuckets.join("|"));
-    setBuckets(buckets.filter((bucket) => bucket.key !== key));
   }
 
   function setTextEditActive(key) {
