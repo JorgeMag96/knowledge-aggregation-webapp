@@ -53,6 +53,7 @@ const Bucket = ({ props }) => {
         color="black"
         anchorX="center"
         anchorY="bottom"
+        visible={!deleted}
         position={[position[0], position[1] + 225, position[2] + 5]}
         text={text}
       />
